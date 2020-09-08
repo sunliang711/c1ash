@@ -14,7 +14,7 @@ Description=clash service
 #ExecStop=
 
 Type=simple
-ExecStart=NAME -d .
+ExecStart=CWD/NAME -d .
 #ExecStop=
 
 User=USER

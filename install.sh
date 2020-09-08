@@ -96,9 +96,10 @@ install(){
 
     case $(uname) in
         Linux)
-            sudo sed -e "s|CWD|${thisDir}|g" \
+            sed -e "s|CWD|${thisDir}|g" \
                      -e "s|USER|$user|g" \
-                     -e "s|NAME|$name|g" clash.service >/etc/systemd/system/clash.service
+                     -e "s|NAME|$name|g" clash.service /tmp/clash.service 
+            sudo mv /tmp/clash.service /etc/systemd/system/clash.service
             sudo systemctl enable clash.service
             ;;
         Darwin)
@@ -106,7 +107,7 @@ install(){
                 -e "s|NAME|$name|g" clash.plist >$home/Library/LaunchAgents/clash.plist
             ;;
     esac
-    echo "Add ${thisDir}/clash.sh to PATH manually."
+    echo "Add ${thisDir}/ to PATH manually."
 }
 
 
