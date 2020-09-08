@@ -133,14 +133,14 @@ rules:
  
   # (Streaming Media)
   # - RULE-SET,Streaming,Streaming
-  - RULE-SET,Streaming,Proxy
+  # - RULE-SET,Streaming,Proxy
  
   # (StreamingSE)
   # - RULE-SET,StreamingSE,StreamingSE
-  - RULE-SET,StreamingSE,Proxy
+  # - RULE-SET,StreamingSE,Proxy
  
   # (DNS Cache Pollution) / (IP Blackhole) / (Region-Restricted Access Denied) / (Network Jitter)
-  - RULE-SET,Global,Proxy
+  # - RULE-SET,Global,Proxy
  
  
   - MATCH,Proxy
