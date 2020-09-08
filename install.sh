@@ -89,6 +89,10 @@ install(){
     mv $name ${thisDir}
     cd ${thisDir}
 
+    if [ ! -e Country.mmdb ];then
+        curl -LO https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/Country.mmdb
+    fi
+
 
     case $(uname) in
         Linux)

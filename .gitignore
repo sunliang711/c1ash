@@ -2,7 +2,6 @@
 *.swp
 .idea/
 Country.mmdb
-RuleSet
 clash-darwin
 clash-linux
 config.yaml
