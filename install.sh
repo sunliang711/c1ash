@@ -98,7 +98,7 @@ install(){
         Linux)
             sed -e "s|CWD|${thisDir}|g" \
                      -e "s|USER|$user|g" \
-                     -e "s|NAME|$name|g" clash.service /tmp/clash.service 
+                     -e "s|NAME|$name|g" clash.service > /tmp/clash.service 
             sudo mv /tmp/clash.service /etc/systemd/system/clash.service
             sudo systemctl enable clash.service
             ;;
