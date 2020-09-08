@@ -115,9 +115,9 @@ status(){
             name=clash-darwin
         ;;
     esac
-    port=$(grep '^port:' config.yaml 2>/dev/null | awk '{print $2}')
     pid=$(ps aux | grep "$name -d ." | grep -v grep | awk '{print $2}')
-    if [ -n $pid ] && [ -n $port ];then
+    if [ -n "$pid" ];then
+        port=$(grep '^port:' config.yaml 2>/dev/null | awk '{print $2}')
         echo "clash is running on port: $port with pid: $pid"
     else
         echo "clash is not running"
