@@ -54,6 +54,8 @@ usage(){
 		CMD:
 		    http    [-h <host>] [-u <user> -p <password> ] <port>
 		    https   [-h <host>] [-u <user> -p <password> ] <port>
+		    all     [-h <host>] [-u <user> -p <password> ] <port>
+
 		    socks   [-h <host>] [-u <user> -p <password> ] <port>
 
 		    pac     [upstream:default: localhost:1080] [protocol: default: SOCKS5]
@@ -281,6 +283,10 @@ case $cmd in
         setHttpProxy "$@"
         ;;
     https)
+        setHttpsProxy "$@"
+        ;;
+    all)
+        setHttpProxy "$@"
         setHttpsProxy "$@"
         ;;
     socks)
