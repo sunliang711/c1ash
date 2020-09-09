@@ -55,50 +55,87 @@ function runAsRoot(){
 # function with 'function' is hidden when run help, without 'function' is show
 ###############################################################################
 # TODO
+case $(uname) in
+    Linux)
+        binName=clash-linux
+        cmdStat=stat
+        ;;
+    Darwin)
+        binName=clash-darwin
+        cmdStat='stat -x'
+        ;;
+esac
+editor=vi
+if command -v vim >/dev/null 2>&1;then
+    editor=vim
+fi
+if command -v nvim >/dev/null 2>&1;then
+    editor=nvim
+fi
+logfile=/tmp/clash.log
+configFile=config.yaml
+
 start(){
+    if status >/dev/null;then
+        echo "clash is ${bold}already${reset} running,do nothing."
+        exit 1
+    fi
+    echo "start clash..."
     case $(uname) in
         Linux)
             runAsRoot systemctl start clash.service
             ;;
         Darwin)
-            launchctl load -w $home/Library/LaunchAgents/clash.plist
-            port=$(grep '^port:' config.yaml | awk '{print $2}')
-            if [ -n $port ];then
-                bash ./setMacProxy.sh http $port
-                bash ./setMacProxy.sh https $port
-            else
-                echo "get http port error."
-            fi
+            launchctl load -w $home/Library/LaunchAgents/clash.plist 2>/dev/null
             ;;
     esac
+
+    if status >/dev/null;then
+        if [ $(uname) = "Darwin" ];then
+            port=$(grep '^port:' $configFile | awk '{print $2}')
+            if [ -n $port ];then
+                echo "Set system http proxy: localhost:$port"
+                echo "Set system https proxy: localhost:$port"
+                bash ./setMacProxy.sh http $port >/dev/null
+                bash ./setMacProxy.sh https $port >/dev/null
+            else
+                echo "${red}Error${reset}: get http port error."
+            fi
+        fi
+        echo "OK."
+    else
+        echo "${red}Failed${reset}. Please check your config file."
+    fi
 }
 
 stop(){
+    echo "stop clash..."
     case $(uname) in
         Linux)
             runAsRoot systemctl stop clash.service
             ;;
         Darwin)
-            launchctl unload -w $home/Library/LaunchAgents/clash.plist
+            launchctl unload -w $home/Library/LaunchAgents/clash.plist 2>/dev/null
             bash ./setMacProxy.sh unset
             ;;
     esac
 }
 
 config(){
-    editor=vi
-    if command -v vim >/dev/null 2>&1;then
-        editor=vim
+    if [ ! -e $configFile ];then
+        cp config-example.yaml $configFile
     fi
-    if command -v nvim >/dev/null 2>&1;then
-        editor=nvim
+    mtime0="$(${cmdStat} $configFile | grep Modify)"
+    $editor $configFile
+    mtime1="$(${cmdStat} $configFile | grep Modify)"
+    #配置文件被修改
+    if [ "$mtime0" != "$mtime1" ];then
+        #并且当前是运行状态，则重启服务
+        if status >/dev/null;then
+            echo "Config file changed,restart server"
+            restart
+        fi
     fi
-    if [ ! -e config.yaml ];then
-        cp config-example.yaml config.yaml
-    fi
-    $editor config.yaml
-    #TODO
-    #restart after config.yaml changed
 }
 
 restart(){
@@ -107,35 +144,23 @@ restart(){
 }
 
 status(){
-    case $(uname) in
-        Linux)
-            name=clash-linux
-        ;;
-        Darwin)
-            name=clash-darwin
-        ;;
-    esac
-    pid=$(ps aux | grep "$name -d ." | grep -v grep | awk '{print $2}')
+    pid=$(ps aux | grep "$binName -d ." | grep -v grep | awk '{print $2}')
     if [ -n "$pid" ];then
         port=$(grep '^port:' config.yaml 2>/dev/null | awk '{print $2}')
-        echo "clash is running on port: $port with pid: $pid"
+        echo "clash is running on port: ${bold}$port${reset} with pid: $pid"
+        return 0
     else
-        echo "clash is not running"
+        echo "clash is ${bold}not${reset} running"
+        return 1
     fi
 }
 
 log(){
-    tail -f /tmp/clash.log
+    echo "Watching $logfile..."
+    tail -f $logfile
 }
 
 em(){
-    editor=vi
-    if command -v vim >/dev/null 2>&1;then
-        editor=vim
-    fi
-    if command -v nvim >/dev/null 2>&1;then
-        editor=nvim
-    fi
     $editor $0
 }
 
