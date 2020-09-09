@@ -102,9 +102,9 @@ start(){
                 echo "${red}Error${reset}: get http port error."
             fi
         fi
-        echo "OK."
+        echo "OK: clash is running now."
     else
-        echo "${red}Failed${reset}. Please check your config file."
+        echo "Error: clash is not running."
     fi
 }
 
@@ -165,6 +165,18 @@ log(){
             tail -f $logfile
             ;;
     esac
+}
+
+doctor(){
+    if status >/dev/null;then
+        port=$(grep '^port:' $configFile | awk '{print $2}')
+        if curl -m 5 -x http://localhost:$port -s ifconfig.me >/dev/null;then
+            echo "Proxy is ${green}${bold}healthy${reset}"
+        else
+            echo "Proxy ${red}not work${reset}"
+        fi
+
+    fi
 }
 
 em(){
