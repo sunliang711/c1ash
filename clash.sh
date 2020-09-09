@@ -156,8 +156,15 @@ status(){
 }
 
 log(){
-    echo "Watching $logfile..."
-    tail -f $logfile
+    case $(uname) in
+        Linux)
+            sudo journalctl -u clash -f
+            ;;
+        Darwin)
+            echo "Watching $logfile..."
+            tail -f $logfile
+            ;;
+    esac
 }
 
 em(){
