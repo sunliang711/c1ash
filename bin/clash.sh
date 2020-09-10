@@ -16,7 +16,7 @@ blue=$(tput setaf 4)
 cyan=$(tput setaf 5)
         bold=$(tput bold)
 reset=$(tput sgr0)
-function runAsRoot(){
+function _runAsRoot(){
     verbose=0
     while getopts ":v" opt;do
         case "$opt" in
@@ -52,7 +52,7 @@ function runAsRoot(){
 }
 ###############################################################################
 # write your code below (just define function[s])
-# function with 'function' is hidden when run help, without 'function' is show
+# function is hidden when begin with '_'
 ###############################################################################
 # TODO
 case $(uname) in
@@ -84,7 +84,7 @@ start(){
     echo "start clash..."
     case $(uname) in
         Linux)
-            runAsRoot systemctl start clash.service
+            _runAsRoot systemctl start clash.service
             ;;
         Darwin)
             launchctl load -w $home/Library/LaunchAgents/clash.plist 2>/dev/null
@@ -113,7 +113,7 @@ stop(){
     echo "stop clash..."
     case $(uname) in
         Linux)
-            runAsRoot systemctl stop clash.service
+            _runAsRoot systemctl stop clash.service
             ;;
         Darwin)
             launchctl unload -w $home/Library/LaunchAgents/clash.plist 2>/dev/null
@@ -189,15 +189,17 @@ em(){
 ###############################################################################
 # write your code above
 ###############################################################################
-function help(){
+function _help(){
     cat<<EOF2
 Usage: $(basename $0) ${bold}CMD${reset}
 
 ${bold}CMD${reset}:
 EOF2
-    perl -lne 'print "\t$1" if /^\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | grep -v runAsRoot
+    # perl -lne 'print "\t$1" if /^\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE})
+    perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | grep -v '^\t_'
 }
-function loadENV(){
+
+function _loadENV(){
     if [ -z "$INIT_HTTP_PROXY" ];then
         echo "INIT_HTTP_PROXY is empty"
         echo -n "Enter http proxy: (if you need) "
@@ -216,7 +218,7 @@ function loadENV(){
     fi
 }
 
-function unloadENV(){
+function _unloadENV(){
     if [ -n "$https_proxy" ];then
         unset http_proxy
         unset https_proxy
@@ -230,7 +232,7 @@ function unloadENV(){
 
 case "$1" in
      ""|-h|--help|help)
-        help
+        _help
         ;;
     *)
         "$@"
