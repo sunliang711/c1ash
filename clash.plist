@@ -8,7 +8,7 @@
     <string>CWD</string>
     <key>ProgramArguments</key>
     <array>
-        <string>./NAME</string>
+        <string>CWD/NAME</string>
         <string>-d</string>
         <string>.</string>
     </array>
