@@ -107,7 +107,7 @@ install(){
                 -e "s|NAME|$name|g" clash.plist >$home/Library/LaunchAgents/clash.plist
             ;;
     esac
-    echo "Add ${thisDir}/ to PATH manually."
+    echo "Add ${thisDir}/bin to PATH manually."
 }
 
 

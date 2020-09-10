@@ -73,7 +73,8 @@ if command -v nvim >/dev/null 2>&1;then
     editor=nvim
 fi
 logfile=/tmp/clash.log
-configFile=config.yaml
+configFile=../config.yaml
+configExampleFile=../config-example.yaml
 
 start(){
     if status >/dev/null;then
@@ -96,8 +97,8 @@ start(){
             if [ -n $port ];then
                 echo "Set system http proxy: localhost:$port"
                 echo "Set system https proxy: localhost:$port"
-                bash ./setMacProxy.sh http $port >/dev/null
-                bash ./setMacProxy.sh https $port >/dev/null
+                bash ../setMacProxy.sh http $port >/dev/null
+                bash ../setMacProxy.sh https $port >/dev/null
             else
                 echo "${red}Error${reset}: get http port error."
             fi
@@ -116,14 +117,14 @@ stop(){
             ;;
         Darwin)
             launchctl unload -w $home/Library/LaunchAgents/clash.plist 2>/dev/null
-            bash ./setMacProxy.sh unset
+            bash ../setMacProxy.sh unset
             ;;
     esac
 }
 
 config(){
     if [ ! -e $configFile ];then
-        cp config-example.yaml $configFile
+        cp $configExampleFile $configFile
     fi
     mtime0="$(${cmdStat} $configFile | grep Modify)"
     $editor $configFile
