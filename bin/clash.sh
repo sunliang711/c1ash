@@ -184,6 +184,11 @@ em(){
     $editor $0
 }
 
+pac(){
+    echo TODO
+
+    # restart server when needed
+}
 
 
 ###############################################################################
@@ -196,7 +201,8 @@ Usage: $(basename $0) ${bold}CMD${reset}
 ${bold}CMD${reset}:
 EOF2
     # perl -lne 'print "\t$1" if /^\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE})
-    perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | grep -v '^\t_'
+    # perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | grep -v '^\t_'
+    perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | perl -lne "print if /^\t[^_]/"
 }
 
 function _loadENV(){
