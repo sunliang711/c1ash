@@ -193,7 +193,7 @@ payload:
   - DOMAIN-SUFFIX,keepfrds.com
   - DOMAIN-SUFFIX,madsrevolution.net
   - DOMAIN-SUFFIX,morethan.tv
-  - DOMAIN-SUFFIX,m-team.cc
+  # - DOMAIN-SUFFIX,m-team.cc
   - DOMAIN-SUFFIX,myanonamouse.net
   - DOMAIN-SUFFIX,nanyangpt.com
   - DOMAIN-SUFFIX,ncore.cc

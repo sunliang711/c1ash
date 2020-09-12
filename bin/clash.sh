@@ -3,8 +3,8 @@ rpath="$(readlink ${BASH_SOURCE})"
 if [ -z "$rpath" ];then
     rpath=${BASH_SOURCE}
 fi
-thisDir="$(cd $(dirname $rpath) && pwd)"
-cd "$thisDir"
+this="$(cd $(dirname $rpath) && pwd)"
+cd "$this"
 
 user="${SUDO_USER:-$(whoami)}"
 home="$(eval echo ~$user)"
@@ -185,9 +185,19 @@ em(){
 }
 
 pac(){
-    echo TODO
+    pacfile=${this}/../RuleSet/Pac.yaml
+    local mtime0="$(${cmdStat} $pacfile | grep Modify)"
+    $editor $pacfile
+    local mtime1="$(${cmdStat} $pacfile | grep Modify)"
+    #配置文件被修改
+    if [ "$mtime0" != "$mtime1" ];then
+        #并且当前是运行状态，则重启服务
+        if status >/dev/null;then
+            echo "Pac file changed,restart server"
+            restart
+        fi
+    fi
 
-    # restart server when needed
 }
 
 
