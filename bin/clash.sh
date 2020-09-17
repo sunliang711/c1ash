@@ -147,7 +147,7 @@ restart(){
 status(){
     pid=$(ps aux | grep "$binName -d ." | grep -v grep | awk '{print $2}')
     if [ -n "$pid" ];then
-        port=$(grep '^port:' config.yaml 2>/dev/null | awk '{print $2}')
+        port=$(grep '^port:' ${this}/../config.yaml 2>/dev/null | awk '{print $2}')
         echo "clash is running on port: ${bold}$port${reset} with pid: $pid"
         return 0
     else
