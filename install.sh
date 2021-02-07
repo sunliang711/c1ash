@@ -108,7 +108,7 @@ install(){
     case $(uname) in
         Linux)
             sed -e "s|CWD|${thisDir}|g" \
-                     -e "s|USER|$user|g" \
+                     -e "s|USER|root|g" \
                      -e "s|<START>|$start|g" clash.service > /tmp/clash.service 
             sudo mv /tmp/clash.service /etc/systemd/system/clash.service
             sudo systemctl enable clash.service
@@ -131,7 +131,7 @@ installgw(){
     case $(uname) in
         Linux)
             sed -e "s|CWD|${thisDir}|g" \
-                     -e "s|USER|$user|g" \
+                     -e "s|USER|root|g" \
                      -e "s|<START_POST>|${start_post}|g" \
                      -e "s|<STOP_POST>|${stop_post}|g" \
                      -e "s|<START>|$start|g" clash.service > /tmp/clash.service
