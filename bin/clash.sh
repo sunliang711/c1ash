@@ -126,9 +126,30 @@ stop(){
 set(){
     cmd="$(cat<<EOF
     iptables -t nat -N clash || { return 0; }
-    iptables -t nat -A clash -d 10.1.1.1/16 -j RETURN
+    iptables -t nat -A clash -d 0.0.0.0/8 -j RETURN
+    iptables -t nat -A clash -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A clash -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A clash -d 169.254.0.0/16 -j RETURN
+    iptables -t nat -A clash -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -A clash -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A clash -d 224.0.0.0/4 -j RETURN
+    iptables -t nat -A clash -d 240.0.0.0/4 -j RETURN
     iptables -t nat -A clash -p tcp -j REDIRECT --to-ports 7892
     iptables -t nat -A PREROUTING -p tcp -j clash
+
+    ip rule add fwmark 1 table 100
+    ip route add local default dev lo table 100
+    iptables -t mangle -N clash
+    iptables -t mangle -A clash -d 0.0.0.0/8 -j RETURN
+    iptables -t mangle -A clash -d 10.0.0.0/8 -j RETURN
+    iptables -t mangle -A clash -d 127.0.0.0/8 -j RETURN
+    iptables -t mangle -A clash -d 169.254.0.0/16 -j RETURN
+    iptables -t mangle -A clash -d 172.16.0.0/12 -j RETURN
+    iptables -t mangle -A clash -d 192.168.0.0/16 -j RETURN
+    iptables -t mangle -A clash -d 224.0.0.0/4 -j RETURN
+    iptables -t mangle -A clash -d 240.0.0.0/4 -j RETURN
+    iptables -t mangle -A clash -p udp -j TPROXY --on-port 7892 --tproxy-mark 1
+    iptables -t mangle -A PREROUTING -p udp -j clash
 EOF
 )"
     _runAsRoot "${cmd}"
@@ -138,10 +159,18 @@ EOF
     # iptables -t nat -D PREROUTING -p tcp -j REDIRECT --to-ports 7892
 clear(){
     cmd="$(cat<<EOF
-    iptables -t nat -F clash
     iptables -t nat -D PREROUTING -p tcp -j clash
+    iptables -t nat -F clash
+    iptables -t nat -X clash
+
+    iptables -t mangle -D PREROUTING -p udp -j clash
+    iptables -t mangle -F clash
+    iptables -t mangle -X clash
+
+    ip rule del fwmark 1 table 100
 EOF
 )"
+    _runAsRoot "${cmd}"
 }
 
 config(){
