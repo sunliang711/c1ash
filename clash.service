@@ -14,8 +14,9 @@ Description=clash service
 #ExecStop=
 
 Type=simple
-ExecStart=CWD/NAME -d .
-#ExecStop=
+ExecStart=<START>
+ExecStartPost=<START_POST>
+ExecStopPost=<STOP_POST>
 
 User=USER
 WorkingDirectory=CWD

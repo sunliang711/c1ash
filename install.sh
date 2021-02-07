@@ -68,37 +68,48 @@ install(){
     need unzip
     case $(uname) in
         Linux)
-            clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/clash-linux.tar.bzip
-            name=clash-linux
+            # clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/clash-linux.tar.bzip
+            clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/20201227/clash-linux-amd64-2020.12.27.gz
             ;;
         Darwin)
-            clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/clash-darwin.tar.bzip
-            name=clash-darwin
+            # clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/clash-darwin.tar.bzip
+            clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/20201227/clash-darwin-amd64-2020.12.27.gz
             ;;
     esac
 
+    case $(uname -m) in
+        aarch64)
+            # 树莓派
+            clashURL=https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/20201227/clash-linux-armv8-2020.12.27.gz
+            ;;
+    esac
+
+    tarFile=${clashURL##*/}
+    name=${tarFile%.gz}
+
     #download
     cd /tmp
-    if [ ! -e $name.tar.bzip ];then
-        curl -LO $clashURL || { echo "download $name failed!"; exit 1; }
+    if [ ! -e $tarFile ];then
+        curl -LO $clashURL || { echo "download $tarFile failed!"; exit 1; }
     fi
 
     #unzip
-    tar xvf $name.tar.bzip
+    gunzip $tarFile
     chmod +x $name
-    mv $name ${thisDir}
+    mv $name ${thisDir}/clash
     cd ${thisDir}
 
     if [ ! -e Country.mmdb ];then
         curl -LO https://source711.oss-cn-shanghai.aliyuncs.com/clash-premium/Country.mmdb
     fi
 
+    local start="${thisDir}/clash -d ."
 
     case $(uname) in
         Linux)
             sed -e "s|CWD|${thisDir}|g" \
                      -e "s|USER|$user|g" \
-                     -e "s|NAME|$name|g" clash.service > /tmp/clash.service 
+                     -e "s|<START>|$start|g" clash.service > /tmp/clash.service 
             sudo mv /tmp/clash.service /etc/systemd/system/clash.service
             sudo systemctl enable clash.service
             ;;
@@ -107,9 +118,33 @@ install(){
                 -e "s|NAME|$name|g" clash.plist >$home/Library/LaunchAgents/clash.plist
             ;;
     esac
+    export PATH="${thisDir}/bin:${PATH}"
     echo "Add ${thisDir}/bin to PATH manually."
 }
 
+installgw(){
+    install
+
+    local start="${thisDir}/clash -d ."
+    local start_post="${thisDir}/bin/clash.sh set"
+    local stop_post="${thisDir}/bin/clash.sh clear"
+    case $(uname) in
+        Linux)
+            sed -e "s|CWD|${thisDir}|g" \
+                     -e "s|USER|$user|g" \
+                     -e "s|<START_POST>|${start_post}|g" \
+                     -e "s|<STOP_POST>|${stop_post}|g" \
+                     -e "s|<START>|$start|g" clash.service > /tmp/clash.service
+            sudo mv /tmp/clash.service /etc/systemd/system/clash.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable --now clash.service
+            ;;
+        Darwin)
+            echo "Not support MacOS"
+            exit 1
+            ;;
+    esac
+}
 
 
 ###############################################################################

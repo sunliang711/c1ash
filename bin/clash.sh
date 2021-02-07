@@ -58,6 +58,7 @@ function _runAsRoot(){
 case $(uname) in
     Linux)
         binName=clash-linux
+        binName=clashp
         cmdStat=stat
         ;;
     Darwin)
@@ -120,6 +121,27 @@ stop(){
             bash ../setMacProxy.sh unset
             ;;
     esac
+}
+
+set(){
+    cmd="$(cat<<EOF
+    iptables -t nat -N clash || { return; }
+    iptables -t nat -A clash -d 10.1.1.1/16 -j RETURN
+    iptables -t nat -A clash -p tcp -j REDIRECT --to-ports 7892
+    iptables -t nat -A PREROUTING -p tcp -j clash
+EOF
+)"
+    _runAsRoot "${cmd}"
+}
+
+    # iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-ports 7892
+    # iptables -t nat -D PREROUTING -p tcp -j REDIRECT --to-ports 7892
+clear(){
+    cmd="$(cat<<EOF
+    iptables -t nat -F clash
+    iptables -t nat -D PREROUTING -p tcp -j clash
+EOF
+)"
 }
 
 config(){
