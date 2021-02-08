@@ -115,7 +115,7 @@ install(){
             ;;
         Darwin)
             sed -e "s|CWD|${thisDir}|g" \
-                -e "s|NAME|$name|g" clash.plist >$home/Library/LaunchAgents/clash.plist
+                -e "s|NAME|clash|g" clash.plist >$home/Library/LaunchAgents/clash.plist
             ;;
     esac
     export PATH="${thisDir}/bin:${PATH}"
