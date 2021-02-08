@@ -53,12 +53,12 @@ cfw-bypass:
   - <local>
 cfw-latency-timeout: 5000
 proxies:
-  # - name:  Malaysia
+  # - name:  ss1
   #   type: ss
-  #   server: djarmh.nbcloud.co
-  #   port: "5738"
-  #   cipher: aes-128-gcm
-  #   password: nexally
+  #   server: sh.gitez.
+  #   port: 8005
+  #   cipher: aes-256-cfb
+  #   password: 8005e
   #   udp: true
   #   plugin: obfs
   #   plugin-opts:
@@ -102,7 +102,7 @@ proxy-groups:
   - name: Nexitally
     type: select
     proxies:
-      -  socks5 example
+      -  ss1
   - name:  Apple
     type: select
     proxies:
