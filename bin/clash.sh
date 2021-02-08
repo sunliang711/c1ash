@@ -55,14 +55,15 @@ function _runAsRoot(){
 # function is hidden when begin with '_'
 ###############################################################################
 # TODO
+binName=clash
 case $(uname) in
     Linux)
-        binName=clash-linux
-        binName=clashp
+        # binName=clash-linux
+        # binName=clash
         cmdStat=stat
         ;;
     Darwin)
-        binName=clash-darwin
+        # binName=clash-darwin
         cmdStat='stat -x'
         ;;
 esac
