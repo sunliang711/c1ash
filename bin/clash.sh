@@ -14,7 +14,7 @@ green=$(tput setaf 2)
 yellow=$(tput setaf 3)
 blue=$(tput setaf 4)
 cyan=$(tput setaf 5)
-        bold=$(tput bold)
+bold=$(tput bold)
 reset=$(tput sgr0)
 function _runAsRoot(){
     verbose=0
@@ -75,8 +75,8 @@ if command -v nvim >/dev/null 2>&1;then
     editor=nvim
 fi
 logfile=/tmp/clash.log
-configFile=../config.yaml
-configExampleFile=../config-example.yaml
+configFile=${this}/../config.yaml
+configExampleFile=${this}/../config-example.yaml
 
 start(){
     if status >/dev/null;then
@@ -125,6 +125,12 @@ stop(){
 }
 
 set(){
+    local redir_port="$(perl -lne 'print $1 if /^\s*redir-port:\s*(\d+)/' ${configFile})"
+    if [ -z "${redir_port}" ];then
+        echo "Cannot find redir_port"
+        exit 1
+    fi
+    echo "${green}Found redir_port: ${redir_port}${reset}"
     cmd="$(cat<<EOF
     iptables -t nat -N clash || { return 0; }
     iptables -t nat -A clash -d 0.0.0.0/8 -j RETURN
@@ -135,7 +141,7 @@ set(){
     iptables -t nat -A clash -d 192.168.0.0/16 -j RETURN
     iptables -t nat -A clash -d 224.0.0.0/4 -j RETURN
     iptables -t nat -A clash -d 240.0.0.0/4 -j RETURN
-    iptables -t nat -A clash -p tcp -j REDIRECT --to-ports 7892
+    iptables -t nat -A clash -p tcp -j REDIRECT --to-ports ${redir_port}
     iptables -t nat -A PREROUTING -p tcp -j clash
 
     ip rule add fwmark 1 table 100
@@ -149,7 +155,7 @@ set(){
     iptables -t mangle -A clash -d 192.168.0.0/16 -j RETURN
     iptables -t mangle -A clash -d 224.0.0.0/4 -j RETURN
     iptables -t mangle -A clash -d 240.0.0.0/4 -j RETURN
-    iptables -t mangle -A clash -p udp -j TPROXY --on-port 7892 --tproxy-mark 1
+    iptables -t mangle -A clash -p udp -j TPROXY --on-port ${redir_port} --tproxy-mark 1
     iptables -t mangle -A PREROUTING -p udp -j clash
 EOF
 )"
