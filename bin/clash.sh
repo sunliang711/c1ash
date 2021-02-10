@@ -1,61 +1,119 @@
 #!/bin/bash
-rpath="$(readlink ${BASH_SOURCE})"
-if [ -z "$rpath" ];then
-    rpath=${BASH_SOURCE}
+if [ -z "${BASH_SOURCE}" ]; then
+    this=${PWD}
+    logfile="/tmp/$(%FT%T).log"
+else
+    rpath="$(readlink ${BASH_SOURCE})"
+    if [ -z "$rpath" ]; then
+        rpath=${BASH_SOURCE}
+    fi
+    this="$(cd $(dirname $rpath) && pwd)"
+    logfile="/tmp/$(basename ${BASH_SOURCE}).log"
 fi
-this="$(cd $(dirname $rpath) && pwd)"
-cd "$this"
+
+export PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 user="${SUDO_USER:-$(whoami)}"
 home="$(eval echo ~$user)"
 
-red=$(tput setaf 1)
-green=$(tput setaf 2)
-yellow=$(tput setaf 3)
-blue=$(tput setaf 4)
-cyan=$(tput setaf 5)
-bold=$(tput bold)
-reset=$(tput sgr0)
-function _runAsRoot(){
-    verbose=0
-    while getopts ":v" opt;do
-        case "$opt" in
-            v)
-                verbose=1
-                ;;
-            \?)
-                echo "Unknown option: \"$OPTARG\""
-                exit 1
-                ;;
-        esac
-    done
-    shift $((OPTIND-1))
-    cmd="$@"
-    if [ -z "$cmd" ];then
-        echo "${red}Need cmd${reset}"
-        exit 1
-    fi
+# export TERM=xterm-256color
 
-    if [ "$verbose" -eq 1 ];then
-        echo "run cmd:\"${red}$cmd${reset}\" as root."
-    fi
+# Use colors, but only if connected to a terminal, and that terminal
+# supports them.
+if which tput >/dev/null 2>&1; then
+  ncolors=$(tput colors 2>/dev/null)
+fi
+if [ -t 1 ] && [ -n "$ncolors" ] && [ "$ncolors" -ge 8 ]; then
+    RED="$(tput setaf 1)"
+    GREEN="$(tput setaf 2)"
+    YELLOW="$(tput setaf 3)"
+    BLUE="$(tput setaf 4)"
+    CYAN="$(tput setaf 5)"
+    BOLD="$(tput bold)"
+    NORMAL="$(tput sgr0)"
+else
+    RED=""
+    GREEN=""
+    YELLOW=""
+    CYAN=""
+    BLUE=""
+    BOLD=""
+    NORMAL=""
+fi
 
-    if (($EUID==0));then
-        sh -c "$cmd"
-    else
-        if ! command -v sudo >/dev/null 2>&1;then
-            echo "Need sudo cmd"
+_err(){
+    echo "$*" >&2
+}
+
+_command_exists(){
+    command -v "$@" > /dev/null 2>&1
+}
+
+rootID=0
+
+_runAsRoot(){
+    cmd="${*}"
+    bash_c='bash -c'
+    if [ "${EUID}" -ne "${rootID}" ];then
+        if _command_exists sudo; then
+            bash_c='sudo -E bash -c'
+        elif _command_exists su; then
+            bash_c='su -c'
+        else
+            cat >&2 <<-'EOF'
+			Error: this installer needs the ability to run commands as root.
+			We are unable to find either "sudo" or "su" available to make this happen.
+			EOF
             exit 1
         fi
-        sudo sh -c "$cmd"
+    fi
+    # only output stderr
+    (set -x; $bash_c "${cmd}" >> ${logfile} )
+}
+
+function _insert_path(){
+    if [ -z "$1" ];then
+        return
+    fi
+    echo -e ${PATH//:/"\n"} | grep -c "^$1$" >/dev/null 2>&1 || export PATH=$1:$PATH
+}
+
+_run(){
+    # only output stderr
+    (set -x; bash -c "${cmd}" >> ${logfile})
+}
+
+function _root(){
+    if [ ${EUID} -ne ${rootID} ];then
+        echo "Need run as root!"
+        echo "Requires root privileges."
+        exit 1
+    fi
+}
+
+ed=vi
+if _command_exists vim; then
+    ed=vim
+fi
+if _command_exists nvim; then
+    ed=nvim
+fi
+# use ENV: editor to override
+if [ -n "${editor}" ];then
+    ed=${editor}
+fi
+_onlyLinux(){
+    if [ $(uname) != "Linux" ];then
+        _err "Only on linux"
+        exit 1
     fi
 }
 ###############################################################################
 # write your code below (just define function[s])
 # function is hidden when begin with '_'
 ###############################################################################
-# TODO
 binName=clash
+
 case $(uname) in
     Linux)
         # binName=clash-linux
@@ -67,13 +125,6 @@ case $(uname) in
         cmdStat='stat -x'
         ;;
 esac
-editor=vi
-if command -v vim >/dev/null 2>&1;then
-    editor=vim
-fi
-if command -v nvim >/dev/null 2>&1;then
-    editor=nvim
-fi
 logfile=/tmp/clash.log
 configFile=${this}/../config.yaml
 configExampleFile=${this}/../config-example.yaml
@@ -112,6 +163,7 @@ start(){
 }
 
 stop(){
+    cd ${this}
     echo "stop clash..."
     case $(uname) in
         Linux)
@@ -185,7 +237,7 @@ config(){
         cp $configExampleFile $configFile
     fi
     mtime0="$(${cmdStat} $configFile | grep Modify)"
-    $editor $configFile
+    $ed $configFile
     mtime1="$(${cmdStat} $configFile | grep Modify)"
     #配置文件被修改
     if [ "$mtime0" != "$mtime1" ];then
@@ -239,13 +291,13 @@ doctor(){
 }
 
 em(){
-    $editor $0
+    $ed $0
 }
 
 pac(){
     pacfile=${this}/../RuleSet/Pac.yaml
     local mtime0="$(${cmdStat} $pacfile | grep Modify)"
-    $editor $pacfile
+    $ed $pacfile
     local mtime1="$(${cmdStat} $pacfile | grep Modify)"
     #配置文件被修改
     if [ "$mtime0" != "$mtime1" ];then
@@ -258,11 +310,11 @@ pac(){
 
 }
 
-
 ###############################################################################
 # write your code above
 ###############################################################################
 function _help(){
+    cd ${this}
     cat<<EOF2
 Usage: $(basename $0) ${bold}CMD${reset}
 
@@ -270,7 +322,7 @@ ${bold}CMD${reset}:
 EOF2
     # perl -lne 'print "\t$1" if /^\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE})
     # perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | grep -v '^\t_'
-    perl -lne 'print "\t$2" if /^\s*(function)?\s*(\w+)\(\)\{$/' $(basename ${BASH_SOURCE}) | perl -lne "print if /^\t[^_]/"
+    perl -lne 'print "\t$2" if /^\s*(function)?\s*(\S+)\s*\(\)\s*\{$/' $(basename ${BASH_SOURCE}) | perl -lne "print if /^\t[^_]/"
 }
 
 function _loadENV(){
